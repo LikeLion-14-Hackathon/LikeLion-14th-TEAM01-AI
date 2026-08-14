@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from felix import get_felix_response
 from emil import get_emil_response
 from johannes import get_johannes_response
-from klara import get_klara_response  # ← 추가
 
 app = FastAPI(title="MCM 1976 해커톤 AI 챗봇 서버")
 
@@ -37,9 +36,4 @@ async def chat_emil(request: ChatRequest):
 @app.post("/chat/johannes")
 async def chat_johannes(request: ChatRequest):
     reply = await get_johannes_response(request.session_id, request.message)
-    return {"reply": reply}
-
-@app.post("/chat/klara")  # ← 추가
-async def chat_klara(request: ChatRequest):
-    reply = await get_klara_response(request.session_id, request.message)
     return {"reply": reply}
