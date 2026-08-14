@@ -40,30 +40,27 @@ async def get_felix_response(session_id: str, user_message: str) -> str:
             "count": 0,
             "messages": [{"role": "system", "content": SYSTEM_PROMPT}]
         }
-    
+
     session = sessions[session_id]
-    
-    # 4번째 질문부터는 API를 호출하지 않고 차단 로직 실행
-    if session["count"] >= 3:
-        return "더 이상 질문할 수 없습니다. 현장 단서를 확인하세요."
-    
+
     # 질문 횟수 증가 및 사용자 질문 기록
+    # (※ 질문 횟수 제한/차단은 백엔드에서 처리하므로, 여기서는 카운트만 세고 별도로 차단하지 않음)
     session["count"] += 1
-    
+
     # AI에게 남은 질문 횟수를 힌트로 줄 수 있도록 시스템 힌트 추가
     context_message = f"[System Note: 현재 사용자의 {session['count']}번째 질문입니다.]\n{user_message}"
     session["messages"].append({"role": "user", "content": context_message})
-    
+
     # OpenAI API 호출
     response = await client.chat.completions.create(
         model="gpt-5.6-terra",  # 요구하신 API 모델명 적용
         messages=session["messages"],
         max_completion_tokens=150          # 2~3줄 제한 (약 150토큰 내외)
     )
-    
+
     bot_reply = response.choices[0].message.content
-    
+
     # AI의 답변 기록 유지 (다음에 문맥을 기억하도록 저장하되, System 힌트는 제외한 순수 텍스트만 관리)
     session["messages"].append({"role": "assistant", "content": bot_reply})
-    
+
     return bot_reply
