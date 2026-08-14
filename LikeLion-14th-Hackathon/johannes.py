@@ -35,22 +35,24 @@ async def get_johannes_response(session_id: str, user_message: str) -> str:
             "count": 0,
             "messages": [{"role": "system", "content": SYSTEM_PROMPT}]
         }
-
+    
     session = sessions[session_id]
-
-    # 질문 횟수는 계속 세되, 차단은 백엔드에서 처리하므로 여기서는 막지 않음
+    
+    if session["count"] >= 3:
+        return "더 이상 질문할 수 없습니다. 현장 단서를 확인하세요."
+    
     session["count"] += 1
-
+    
     context_message = f"[System Note: 현재 사용자의 {session['count']}번째 질문입니다.]\n{user_message}"
     session["messages"].append({"role": "user", "content": context_message})
-
+    
     response = await client.chat.completions.create(
         model="gpt-5.6-terra",
         messages=session["messages"],
         max_completion_tokens=150
     )
-
+    
     bot_reply = response.choices[0].message.content
     session["messages"].append({"role": "assistant", "content": bot_reply})
-
+    
     return bot_reply

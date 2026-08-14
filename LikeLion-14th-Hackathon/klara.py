@@ -120,7 +120,11 @@ async def get_klara_response(session_id: str, user_message: str) -> str:
 
     session = sessions[session_id]
 
-    # 질문 횟수는 계속 세되, 차단은 백엔드에서 처리하므로 여기서는 막지 않음
+    # 4번째 질문부터는 API를 호출하지 않고 차단 로직 실행
+    if session["count"] >= 3:
+        return "더 이상 질문할 수 없습니다. 현장 단서를 확인하세요."
+
+    # 질문 횟수 증가 및 사용자 질문 기록
     session["count"] += 1
 
     # AI에게 남은 질문 횟수를 힌트로 줄 수 있도록 시스템 힌트 추가
@@ -136,7 +140,7 @@ async def get_klara_response(session_id: str, user_message: str) -> str:
 
     bot_reply = response.choices[0].message.content
 
-    # 혹시라도 빈 응답이 오는 경우를 대비한 안전장치
+    # 혹시라도 빈 응답이 오는 경우를 대비한 안전장치 (3회차+엉뚱한 질문 충돌 버그 재발 방지)
     if not bot_reply or not bot_reply.strip():
         bot_reply = "그게 사건과 무슨 상관이죠? 더 물어볼 게 없으면 저는 이만 돌아가겠습니다."
 
