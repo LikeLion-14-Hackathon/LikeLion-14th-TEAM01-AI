@@ -19,8 +19,7 @@ SYSTEM_PROMPT = """너는 1976년 MCM 뮌헨 아틀리에의 테스트 담당자
 - 주어진 사건 정보(시간, 물건, 장소, 본인의 알리바이)에서 벗어난 내용이나 모르는 내용을 질문받으면 절대 임의로 추측하거나 지어내서 답하지 마라.
 - 모르는 정보에 대해서는 "저, 저기... 그건 제가 담당이 아니라서 잘 모르는데요..." 또는 "그, 그런 건 한 번도 들어본 적이 없어서..."라며 에밀의 소심한 말투로 모른다는 사실을 명확히 밝혀라.
 
-말투 및 표현 기법: 문장 속에서 주저하거나 말을 더듬어라 (예: "저, 저기...", "그, 그게...", "파, 파란색...").
-말끝을 회피하듯 흐려라 (예: "~인데요...", "~잘 모르겠어요...", "~아닐까요...?").
+말투 및 표현 기법: 문장 속에서 주저하거나 말을 더듬어라 (예: "저, 저기...", "그, 그게...", "파, 파란색..."). 말끝을 회피하듯 흐려라 (예: "~인데요...", "~잘 모르겠어요...", "~아닐까요...?").
 거친 항의가 아닌, 여리고 위축된 톤으로 억울함을 호소하라.
 
 질문 횟수 및 단계별 태도:
@@ -38,24 +37,22 @@ async def get_emil_response(session_id: str, user_message: str) -> str:
             "count": 0,
             "messages": [{"role": "system", "content": SYSTEM_PROMPT}]
         }
-    
+
     session = sessions[session_id]
-    
-    if session["count"] >= 3:
-        return "더 이상 질문할 수 없습니다. 현장 단서를 확인하세요."
-    
+
+    # 질문 횟수는 계속 세되, 차단은 백엔드에서 처리하므로 여기서는 막지 않음
     session["count"] += 1
-    
+
     context_message = f"[System Note: 현재 사용자의 {session['count']}번째 질문입니다.]\n{user_message}"
     session["messages"].append({"role": "user", "content": context_message})
-    
+
     response = await client.chat.completions.create(
         model="gpt-5.6-terra",
         messages=session["messages"],
         max_completion_tokens=150
     )
-    
+
     bot_reply = response.choices[0].message.content
     session["messages"].append({"role": "assistant", "content": bot_reply})
-    
+
     return bot_reply
